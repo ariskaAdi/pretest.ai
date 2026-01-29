@@ -30,8 +30,8 @@ var genkitInstance *genkit.Genkit
 // InitGenkit - dipanggil SEKALI saat aplikasi start
 func InitGenkit(ctx context.Context) error {
 
-	if err := godotenv.Load(); err != nil {
-        log.Println("Warning: .env file not found")
+	  if err := godotenv.Load(); err != nil {
+        godotenv.Load("../../.env")
     }
     
     // Get API key dari environment variable
@@ -45,7 +45,7 @@ func InitGenkit(ctx context.Context) error {
         genkit.WithPlugins(&googlegenai.GoogleAI{
 			APIKey: apiKey,
 		}),
-        genkit.WithDefaultModel("googleai/gemini-1.5-flash"),
+        genkit.WithDefaultModel("googleai/gemini-2.5-flash"),
     )
     
     genkitInstance = g
@@ -137,7 +137,7 @@ func main() {
     
     app.Post("/api/generate-quiz", GenerateQuizHandler)
     
-    log.Fatal(app.Listen(":3000"))
+    log.Fatal(app.Listen(":4000"))
 }
 
 
