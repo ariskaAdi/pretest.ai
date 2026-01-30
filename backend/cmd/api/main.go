@@ -31,7 +31,7 @@ func main() {
 		},
 	})
 
-	// Middleware
+	// Middleware~
 	app.Use(logger.New())
 	app.Use(cors.New())
 
