@@ -1,41 +1,35 @@
 package config
 
 import (
-	"fmt"
-	"os"
+	"log"
 
-	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
-type Config struct {
-    GoogleAIAPIKey string
-    Port           string
-    Environment    string
+func LoadConfig() {
+    viper.AutomaticEnv()
+
+    viper.SetDefault("APP_PORT", "8080")
+    
+    if err := viper.ReadInConfig(); err != nil {
+        log.Println("config file not found, using env only")
+    }
+
+    Cfg = Config{
+        App: AppConfig{
+            Name: viper.GetString("APP_NAME"),
+            Port: viper.GetString("APP_PORT"),
+        },
+        Genkit: Genkit{
+            GoogleAIAPIKey: viper.GetString("GOOGLE_AI_API_KEY"),
+            Port:           viper.GetString("GENKIT_PORT"),
+            Environment:    viper.GetString("ENV"),
+        },
+    }
 }
 
-func Load() (*Config, error) {
-    if err := godotenv.Load(); err != nil {
-        godotenv.Load("../../.env")
-    }
-    
-    apiKey := os.Getenv("GOOGLE_AI_API_KEY")
-    if apiKey == "" {
-        return nil, fmt.Errorf("GOOGLE_AI_API_KEY is required")
-    }
-    
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "3000"
-    }
-    
-    env := os.Getenv("ENV")
-    if env == "" {
-        env = "development"
-    }
-    
-    return &Config{
-        GoogleAIAPIKey: apiKey,
-        Port:           port,
-        Environment:    env,
-    }, nil
-}
+//         GoogleAIAPIKey: apiKey,
+//         Port:           port,
+//         Environment:    env,
+//     }, nil
+// }

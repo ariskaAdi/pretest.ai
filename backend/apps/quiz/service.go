@@ -19,7 +19,7 @@ type service struct {
 func NewService(ctx context.Context, cfg *config.Config) (*service, error) {
 	g := genkit.Init(ctx,
 		genkit.WithPlugins(&googlegenai.GoogleAI{
-			APIKey: cfg.GoogleAIAPIKey,
+			APIKey: cfg.Genkit.GoogleAIAPIKey,
 		}),
 		genkit.WithDefaultModel("googleai/gemini-2.5-flash"),
 	)

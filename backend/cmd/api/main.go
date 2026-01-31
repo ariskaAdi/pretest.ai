@@ -4,52 +4,53 @@ import (
 	"ariskaAdi-pretest-ai/apps/quiz"
 	"ariskaAdi-pretest-ai/internal/config"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load config
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal("Failed to load config:", err)
+	if err := godotenv.Load("../../.env"); err != nil {
+	log.Println(".env not found, using OS env")
+}
+
+	config.LoadConfig()
+
+	app := fiber.New(fiber.Config{
+		AppName: config.Cfg.App.Name,
+	})
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000",
+		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTION",
+		AllowHeaders: "Authorization, Content-Type",
+		AllowCredentials: true,
+	}))
+
+
+	quiz.Init(app, &config.Cfg)
+
+	go func() {
+		if err := app.Listen(":" + config.Cfg.App.Port); err != nil {
+			log.Println("Server stopped:", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	log.Println("Shutting down server...")
+
+	if err := app.Shutdown(); err != nil {
+		log.Println("Shutdown error:", err)
 	}
 
-	// Setup Fiber
-	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
-				code = e.Code
-			}
-			return c.Status(code).JSON(fiber.Map{
-				"success": false,
-				"error":   err.Error(),
-			})
-		},
-	})
-
-	// Middleware~
-	app.Use(logger.New())
-	app.Use(cors.New())
-
-	// Health check
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status": "ok",
-			"env":    cfg.Environment,
-		})
-	})
-
-	// Routes
-	api := app.Group("/api")
-	quiz.Init(api, cfg)
-
-	// Start server
-	log.Printf("🚀 Server running on port %s (env: %s)", cfg.Port, cfg.Environment)
-	log.Fatal(app.Listen(":" + cfg.Port))
+	log.Println("Server exited gracefully")
 }
 
 
