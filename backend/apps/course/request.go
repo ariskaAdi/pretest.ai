@@ -1,7 +1,9 @@
 package course
 
+import "github.com/google/uuid"
+
 type NewCourseRequestPayload struct {
-	UserPublicId string `db:"user_public_id"`
+	UserPublicId   uuid.UUID `db:"user_public_id"`
 	Title        string `db:"title"`
-	Images       string `db:"images"`
+	ImagesUrl    string `db:"images_url"`
 }

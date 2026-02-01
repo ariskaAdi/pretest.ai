@@ -9,7 +9,7 @@ import (
 
 type AuthEntity struct {
 	Id        int    `db:"id"`
-	PublicId  uuid.UUID `db:"public_id"`
+	UserPublicId  uuid.UUID `db:"public_id"`
 	Username  string `db:"username"`
 	Email     string `db:"email"`
 	Password  string `db:"password"`
@@ -21,7 +21,7 @@ type AuthEntity struct {
 
 func NewFormRegisterRequest(req RegisterRequestPayload) AuthEntity {
 	return AuthEntity{
-		PublicId: uuid.New(),
+		UserPublicId: uuid.New(),
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,

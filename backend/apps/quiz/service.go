@@ -2,43 +2,69 @@ package quiz
 
 import (
 	infrarequest "ariskaAdi-pretest-ai/infra/request"
-	"ariskaAdi-pretest-ai/internal/config"
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/genkit"
-	"github.com/firebase/genkit/go/plugins/googlegenai"
 )
 
 type service struct {
 	genkit *genkit.Genkit
 }
 
-// NewService - init service dengan genkit
-func NewService(ctx context.Context, cfg *config.Config) (*service, error) {
-	g := genkit.Init(ctx,
-		genkit.WithPlugins(&googlegenai.GoogleAI{
-			APIKey: cfg.Genkit.GoogleAIAPIKey,
-		}),
-		genkit.WithDefaultModel("googleai/gemini-2.5-flash"),
-	)
-
-	return &service{genkit: g}, nil
+func NewService(g *genkit.Genkit) *service {
+	return &service{genkit: g}
 }
 
-func (s *service) GenerateQuiz(ctx context.Context, text string) (*QuizResponse, error) {
-    
-	prompt := fmt.Sprintf(infrarequest.GenerateQuizPrompt, text)
+func (s *service) GenerateQuiz(ctx context.Context, req GenerateQuizRequest) (*QuizResultWithStats, error) {
 
-	resp, _, err := genkit.GenerateData[QuizResponse](
+	pdfPart := ai.NewMediaPart("application/pdf", req.PdfUrl)
+    
+	promptPart := ai.NewTextPart(infrarequest.GenerateQuizPrompt)
+
+	message := &ai.Message{
+		Role: ai.RoleUser,
+		Content:  []*ai.Part{pdfPart, promptPart},
+	}
+
+	resp, meta, err := genkit.GenerateData[QuizResponse](
 		ctx,
 		s.genkit,
-		ai.WithPrompt(prompt),
+		ai.WithMessages(message),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate quiz: %w", err)
 	}
 
-	return resp, nil
+	result := &QuizResultWithStats{
+		Quiz: resp,
+	}
+
+	if meta != nil && meta.Usage != nil {
+        result.Usage = UsageInfo{
+            InputTokens:  meta.Usage.InputTokens,
+            OutputTokens: meta.Usage.OutputTokens,
+            TotalTokens:  meta.Usage.TotalTokens,
+        }
+    }
+
+    return result, nil
+}
+
+func (s *service) GenerateQuizFromBytes(ctx context.Context, data []byte) (*QuizResponse, error) {
+    base64Data := base64.StdEncoding.EncodeToString(data)
+    dataURI := fmt.Sprintf("data:application/pdf;base64,%s", base64Data)
+
+    message := &ai.Message{
+        Role: ai.RoleUser,
+        Content: []*ai.Part{
+            ai.NewMediaPart("application/pdf", dataURI),
+            ai.NewTextPart(infrarequest.GenerateQuizPrompt),
+        },
+    }
+
+    resp, _, err := genkit.GenerateData[QuizResponse](ctx, s.genkit, ai.WithMessages(message))
+    return resp, err
 }

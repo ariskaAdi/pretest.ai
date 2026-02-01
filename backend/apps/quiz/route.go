@@ -1,26 +1,18 @@
 package quiz
 
 import (
-	"ariskaAdi-pretest-ai/internal/config"
-	"context"
-	"log"
-
+	"github.com/firebase/genkit/go/genkit"
 	"github.com/gofiber/fiber/v2"
 )
 
-func Init(router fiber.Router, cfg *config.Config) {
-	ctx := context.Background()
-
-	// Init service dengan context
-	svc, err := NewService(ctx, cfg)
-	if err != nil {
-		log.Fatal("Failed to init quiz service:", err)
-	}
+func Init(router fiber.Router, genkit *genkit.Genkit) {
+	svc := NewService(genkit)
 
 	handler := newHandler(svc)
 
 	quizRoute := router.Group("/quiz")
 	{
-		quizRoute.Post("/", handler.GenerateQuiz)
+		quizRoute.Post("/generate", handler.GenerateQuiz)
+		quizRoute.Post("/pdf-local", handler.GenerateQuizFromPdfLocal)
 	}
 }
