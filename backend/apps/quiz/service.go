@@ -20,6 +20,14 @@ func NewService(g *genkit.Genkit) *service {
 
 func (s *service) GenerateQuiz(ctx context.Context, req GenerateQuizRequest) (*QuizResultWithStats, error) {
 
+
+	// pdfBytes, err := fetchPdf(ctx, req.PdfUrl)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// pdfBase64 := base64.StdEncoding.EncodeToString(pdfBytes)
+
 	pdfPart := ai.NewMediaPart("application/pdf", req.PdfUrl)
     
 	promptPart := ai.NewTextPart(infrarequest.GenerateQuizPrompt)
