@@ -2,6 +2,7 @@ package main
 
 import (
 	"ariskaAdi-pretest-ai/apps/quiz"
+	"ariskaAdi-pretest-ai/external/database"
 	"ariskaAdi-pretest-ai/internal/config"
 	"context"
 	"log"
@@ -24,6 +25,15 @@ func main() {
 	}
 
 	config.LoadConfig()
+
+	db, err := database.ConnectPostgres(config.Cfg.DB)
+	if err != nil {
+		panic(err)
+	}
+
+	if db != nil {
+		log.Println("DB CONNECTED")
+	}
 
 	g := genkit.Init(ctx,
 		genkit.WithPlugins(&googlegenai.GoogleAI{

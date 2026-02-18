@@ -7,6 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type Role string
+
+const (
+	ROLE_ADMIN Role = "admin"
+	ROLE_USER  Role = "user"
+)
+
 type AuthEntity struct {
 	Id        int    `db:"id"`
 	UserPublicId  uuid.UUID `db:"public_id"`
@@ -14,6 +21,7 @@ type AuthEntity struct {
 	Email     string `db:"email"`
 	Password  string `db:"password"`
 	OTP       string `db:"otp"`
+	Role 	Role   `db:"role"`
 	Verified  bool   `db:"verified"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
@@ -26,6 +34,7 @@ func NewFormRegisterRequest(req RegisterRequestPayload) AuthEntity {
 		Email:    req.Email,
 		Password: req.Password,
 		Verified: false,
+		Role: ROLE_USER,
 		OTP: utils.GenerateOtp(6),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
